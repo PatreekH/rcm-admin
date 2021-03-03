@@ -1,0 +1,474 @@
+<html>
+	<head>
+		<title>RC Mouse | Admin</title>
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+		<link rel="stylesheet" href="./styles.css">
+		<script src="https://polyfill.io/v3/polyfill.min.js?version=3.52.1&features=fetch"></script>
+	</head>
+	<body>
+
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="row">
+						<div id="corner" class="col-lg-1">
+							<img id="logo" src="./imgs/logomain2.png">
+						</div>
+						<div id="header" class="col-lg-11">
+							<div id="header-title">Admin Panel</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="row">
+						<div id="side-panel" class="col-lg-1">
+							<div id="order-btn" class="panel-btns">
+								<div>Orders</div>	
+							</div>
+							<div class="panel-btns">
+								<div>Reviews</div>	
+							</div>
+							<div class="panel-btns">
+								<div>Inquieries</div>
+							</div>
+						</div>
+						<div id="main-panel" class="col-lg-11">
+							<!-- <div>Welcome</div> -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+		<script type="text/javascript">
+
+			onLoad();
+
+		    function onLoad(){
+
+		    	// displayOrdersSection();
+
+		    };
+
+		    var statusTypes = ['Unprocessed', 'Processed', 'Shipped'];
+		    var loadedOrders;
+
+		    function displayOrdersSection(){
+		    	$.ajax({
+
+			        method: 'GET',
+
+			    	dataType: 'JSON',
+
+			        url: '/get-all-orders',
+
+				    success: function(response){
+
+				    	loadedOrders = response;
+				    	displayOrders(response);
+
+			        }
+			    });
+		    };
+
+		    function displayOrders(allOrders){
+
+		    	$('#main-panel').empty();
+
+				var ctrlPanel = '<div id="control-panel-row" class="row">'+
+				'					<div class="col-lg-12">'+
+				'						<div class="row">'+
+				'							<div id="total-orders-div" data-id="All" class="col-lg-3 control-btns">'+
+				'								<div>Total Orders:</div>'+
+				'								<div id="total-orders">0</div>'+
+				'							</div>'+
+				'							<div id="unprocessed-orders-div" data-id="Unprocessed" class="col-lg-3 control-btns">'+
+				'								<div>Unprocessed:</div>'+
+				'								<div id="Unprocessed-orders" class="Unprocessed-status">0</div>'+
+				'							</div>'+
+				'							<div id="processed-orders-div" data-id="Processed" class="col-lg-3 control-btns">'+
+				'								<div>Processed:</div>'+
+				'								<div id="Processed-orders" class="Processed-status">0</div>'+
+				'							</div>'+
+				'							<div id="shipped-orders-div" data-id="Shipped" class="col-lg-3 control-btns">'+
+				'								<div>Shipped:</div>'+
+				'								<div id="Shipped-orders" class="Shipped-status">0</div>'+
+				'							</div>'+
+				'						</div>'+
+				'					</div>'+
+				'				</div>';
+
+
+				$('#main-panel').append(ctrlPanel);
+
+	        	//Calculates Number of each type
+			    for (var i = 0; i < statusTypes.length; i++) {
+		    		var currentStatusOrders = filterOrders(statusTypes[i], loadedOrders);
+		    		$('#'+statusTypes[i]+'-orders').html(currentStatusOrders.length);
+		    	};
+
+		    	$('#total-orders').html(loadedOrders.length);
+
+		    	for (var i = 0; i < allOrders.length; i++) {
+
+		    		if(allOrders[i].OrderStatus == 'Shipped'){
+		    			var orderBtnCol = '	<div class="col-lg-3"></div>';
+		    		} else {
+			    		var orderBtnCol = '	<div class="col-lg-3">'+
+						'						<button type="button" data-id="'+allOrders[i].OrderNum+'" class="process-order-btn btn btn-dark">Process Order</button>'+
+						'					</div>';
+		    		};
+
+					var currentOrder = '<div class="row">'+
+					'						<div class="col-lg-1"></div>'+
+					'						<div class="col-lg-10">'+
+					'							<div class="row order-panel">'+
+					'								<div class="col-lg-12">'+
+					'									<div class="row">'+
+					'										<div class="col-lg-1">'+
+					'											<div id="order-num-panel">'+allOrders[i].OrderNum+'</div>'+
+					'										</div>'+
+					'										<div class="col-lg-11"></div>'+
+					'									</div>'+
+					'									<div class="row">'+
+					'										<div class="col-lg-3">'+
+					'											<div>Status: <span class="'+allOrders[i].OrderStatus+'-status">'+allOrders[i].OrderStatus+'</span></div>'+
+					'										</div>'+
+					'										<div class="col-lg-3">'+
+					'											<div>Qty: '+allOrders[i].OrderInfo.Qty+'</div>'+
+					'										</div>'+
+					'										<div class="col-lg-3">'+
+					'											<div>Email: '+allOrders[i].Email+'</div>'+
+					'										</div>'+orderBtnCol+
+					'									</div>'+
+					'								</div>'+
+					'							</div>'+
+					'						</div>'+
+					'						<div class="col-lg-1"></div>'+
+					'					</div>';
+
+		    		$('#main-panel').append(currentOrder);
+
+		    	};
+		    };			
+
+			function filterOrders(value, arr){
+				var filteredArray = arr.filter(function( obj ) {
+				    return obj.OrderStatus === value;
+				}).map(function( obj ) {
+				    return obj;
+				});
+				return filteredArray;
+			};
+
+			//Orders Control Panel Btns
+			$('body').on('click', '.control-btns', function(){
+
+				var selectedType = $(this).attr('data-id');
+
+				if(selectedType == 'All'){
+					displayOrdersSection();
+				} else {
+					var filteredTypeOrders = filterOrders(selectedType, loadedOrders);	
+					displayOrders(filteredTypeOrders);
+				};
+
+			});
+
+			//Side Panel Btns
+			$('#order-btn').on('click', function(){
+
+				displayOrdersSection();
+
+			});
+
+			// Process Orders
+			// =============================================================
+
+			$('body').on('click', '.process-order-btn', function(){
+
+				$('#main-panel').empty();
+
+				var selectedOrder = $(this).attr('data-id');
+
+				for (var i = 0; i < loadedOrders.length; i++) {
+					if(loadedOrders[i].OrderNum == selectedOrder){
+						processOrder(loadedOrders[i]);
+					};
+				};
+
+			});
+
+			var currentlySelectedOrder;
+
+			function processOrder(currOrder){
+
+				currentlySelectedOrder = currOrder;
+
+				if(currOrder.OrderStatus == 'Processed'){
+					var calcBtn = '<button type="button" id="resolve-btn" class="btn btn-warning">Resolve Address</button>';
+					var processed = true;
+				} else {
+					var calcBtn = '<button type="button" id="calc-ship-btn" class="btn btn-dark">'+
+					'					<div id="calc-ship-title">Calculate Shipping</div>'+
+					'					<div class="loader-container">'+
+					'						<div class="one"></div>'+
+					'						<div class="two"></div>'+
+					'						<div class="three"></div>'+
+					'						<div class="four"></div>'+
+					'						<div class="five"></div>'+
+					'						<div class="six"></div>'+
+					'						<div class="seven"></div>'+
+					'						<div class="eight"></div>'+
+					'					</div>'+
+					'				</button>';
+					var processed = false;
+				}
+	
+				var processCard = '<div class="row">'+
+				'		 				<div class="col-lg-4"></div>'+
+				'		 				<div id="process-order-div" class="col-lg-4">'+
+				'		 					<div class="row">'+
+				'		 						<div class="col-lg-12">'+
+				'		 							<div>'+currOrder.OrderNum+'</div>'+
+				'		 							<div id="order-status-div">'+currOrder.OrderStatus+'</div>'+
+				'		 						</div>'+
+				'		 					</div>'+
+				'		 					<div class="row">'+
+				'		 						<div class="col-lg-3">'+
+				'		 							<div>Billing: True</div>'+
+				'		 						</div>'+
+				'		 						<div class="col-lg-9">'+
+				'		 							<div>'+
+				'		 								<span>'+currOrder.FirstName+'</span> <span>'+currOrder.LastName+'</span>'+
+				'		 							</div>'+
+				'		 						</div>'+
+				'		 					</div>'+
+				'		 					<div id="address-row" class="row">'+
+				'		 						<div class="col-lg-6">'+
+				'		 							<div id="address-div">'+
+				'		 								<div class="bold-title">Ship To:</div>'+
+				'		 								<div>'+currOrder.Address1+' | '+currOrder.Address2+'</div>'+
+				'		 								<div>'+currOrder.City+', '+currOrder.State+'</div>'+
+				'		 								<div>'+currOrder.Zip+'</div>'+
+				'		 							</div>'+
+				'		 						</div>'+
+				'		 						<div class="col-lg-6">'+
+				'		 							<div id="order-info-div">'+
+				'		 								<div class="bold-title">Order Info:</div>'+
+				'		 								<div>QTY: '+currOrder.OrderInfo.Qty+'</div>'+
+				'		 								<div>Color: Grey</div>'+
+				'		 							</div>'+
+				'		 						</div>'+
+				'		 					</div>'+
+				'		 					<div class="row">'+
+				'		 						<div class="col-lg-4"></div>'+
+				'		 						<div id="calc-ship-btn-div" class="col-lg-4">'+calcBtn+'</div>'+
+				'		 						<div class="col-lg-4"></div>'+
+				'		 					</div>'+
+				'		 				</div>'+
+				'		 				<div class="col-lg-4"></div>'+
+				'		 			</div>';
+
+				$('#main-panel').append(processCard);
+
+				if(processed){
+					pullAddressError();
+				};
+	
+			};
+
+			// Calculate Shipping
+			// =============================================================
+
+			$('body').on('click', '#calc-ship-btn', function(){
+
+				$('.loader-container').css({'display': 'block'});
+				$('#calc-ship-title').css({'display': 'none'});
+
+		    	$.ajax({
+
+			        method: 'POST',
+
+			    	dataType: 'JSON',
+
+			        url: '/processOrder',
+
+			        data: {
+			        	currOrder: currentlySelectedOrder
+			        },
+
+				    success: function(response){
+
+				    	
+				    	if(response.status == 200){
+				    		displayShippingLabel(response.data);
+				    		$('#calc-ship-btn').remove();
+				    	} else if(response.status == 400){
+				    		$('#calc-ship-btn').remove();
+				    		displayAddressError(response.error);
+				    		updateOrderStatus(response.error);
+				    	};
+				    	
+			        }
+
+			    });
+
+			});
+
+			// Pull Error / Display Error / Change Status
+			// =============================================================
+
+			function pullAddressError(){
+		    	$.ajax({
+
+			        method: 'POST',
+
+			    	dataType: 'JSON',
+
+			        url: '/get-order-error',
+
+			        data: {
+			        	currOrder: currentlySelectedOrder
+			        },
+
+				    success: function(response){
+				    	console.log(response);
+				    	displayAddressError(response[0].ErrorInfo);
+			        }
+
+			    });	
+			};
+
+			function displayAddressError(err){
+
+				var addressErrorDiv = '<div class="row">'+
+				'							<div class="col-lg-4"></div>'+
+				'							<div id="address-error-div" class="col-lg-4">'+
+				'								<div id="error-title">Error:</div>'+
+				'								<div id="address-error">'+err.message+'</div>'+
+				'							</div>'+
+				'							<div class="col-lg-4"></div>'+
+				'						</div>';
+
+				$('#main-panel').append(addressErrorDiv);
+		
+			};
+
+			function updateOrderStatus(err){
+		    	$.ajax({
+
+			        method: 'POST',
+
+			    	dataType: 'JSON',
+
+			        url: '/change-order-status',
+
+			        data: {
+			        	currOrder: currentlySelectedOrder,
+			        	currError: err
+			        },
+
+				    success: function(response){
+				    	if(response.status == 'updated'){
+				    		$('#order-status-div').html('Processed');
+				    		$('#calc-ship-btn-div').html('<button type="button" id="resolve-btn" class="btn btn-warning">Resolve Address</button>');
+				    	};
+			        }
+
+			    });				
+			}
+
+			// Generate Shipping Label
+			// =============================================================
+
+			var currnetLabelData;
+
+			function displayShippingLabel(labelData){
+
+				currentLabelData = labelData;
+
+				var labelPreview = '<div id="label-preview-row" class="row">'+
+				'						<div class="col-lg-12">'+
+				'							<div class="row">'+
+				'								<div class="col-lg-4"></div>'+
+				'								<div class="col-lg-4">'+
+				'									<img id="label-preview-img" src="'+labelData.label_download.png+'">'+
+				'								</div>'+
+				'								<div class="col-lg-4">'+
+				'									<div class="row">'+
+				'										<div class="col-lg-12">'+
+				'											<div id="label-info-div">'+
+				'                             		      		<div>'+
+				'													<span class="label-info-titles">&#10004;</span>'+
+				'													<span>Address Confirmed</span>'+
+				'												</div>'+				
+				'												<div>'+
+				'													<span class="label-info-titles">Tracking Number:</span>'+
+				'													<span>'+labelData.tracking_number+'</span>'+
+				'												</div>'+
+				'												<div>'+
+				'													<span class="label-info-titles">Cost:</span>'+
+				'													<span>$'+labelData.shipment_cost.amount+'</span>'+
+				'												</div>'+
+				'											</div>'+
+				'										</div>'+
+				'									</div>'+
+				'									<div class="row">'+
+				'										<div id="print-label-btn-col" class="col-lg-12">'+
+				'											<button id="print-label-btn" class="btn btn-danger">Print Label</button>'+
+				'										</div>'+
+				'									</div>'+
+				'								</div>'+
+				'							</div>'+
+				'						</div>'+
+				'					</div>';
+
+				$('#main-panel').append(labelPreview);
+
+			};
+
+			//Print Label and Store Data===============================
+
+			$('body').on('click', '#print-label-btn', function(){
+
+				//print label
+
+				console.log(currentlySelectedOrder);
+
+		    	$.ajax({
+
+			        method: 'POST',
+
+			    	dataType: 'JSON',
+
+			        url: '/store-order-data',
+
+			        data: {
+			        	currOrder: currentlySelectedOrder,
+			        	currLabel: currentLabelData
+			        },
+
+				    success: function(response){
+				    	console.log(response);
+				    	if(response.status == 'updated'){
+				    		alert('Order Updated!');
+				    		displayOrdersSection();
+				    	} else {
+				    		alert('error');
+				    	}
+
+			        }
+
+			    });
+
+			});
+
+		</script>
+	</body>
+</html>
